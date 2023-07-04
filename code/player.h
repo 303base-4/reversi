@@ -11,6 +11,39 @@
 #include <time.h>
 #include <stdbool.h>
 
+int YO1(int x, int y,struct Player *player)
+{
+    if((x==0&&y==0)||(x==player->row_cnt-1&&y==player->col_cnt-1)||(x==0&&y==player->col_cnt-1)||(x==player->row_cnt-1&&y==0))
+        return 1;
+    else
+        return 0;
+}
+
+int YO2(int x, int y,struct Player *player)
+{
+    if(x>=player->row_cnt/2-2&&y>=player->col_cnt/2-2&&x<=player->row_cnt/2+1&&y<=player->col_cnt/2+1)
+        return 1;
+    else
+        return 0;
+}
+    
+int YO3(int x, int y,struct Player *player)
+{
+    if((x==0&&y>=2&&y<=player->col_cnt-3)||(y==0&&x>=2&&x<=player->row_cnt-3)||(x==player->col_cnt-1&&y>=2&&y<=player->col_cnt-3)||(y==player->row_cnt-1&&x>=2&&x<=player->col_cnt-3))
+        return 1;
+    else
+        return 0;
+}
+    
+int YO5(int x, int y,struct Player *player)
+{
+    if((x>=2&&x<=player->col_cnt-3)||(y>=2&&y<=player->row_cnt-3))
+        return 1;
+    else
+        return 0;
+}
+    
+
 void init(struct Player *player) {
 	// This function will be executed at the begin of each game, only once.
     srand(time(0));
@@ -62,22 +95,22 @@ struct Point place(struct Player *player) {
         int flag=0;
         for(int i=0;i<ok_cnt;i++)
         {
-            if((ok_points[i].X==0&&ok_points[i].Y==0)||(ok_points[i].X==player->row_cnt-1&&ok_points[i].Y==player->col_cnt-1)||(ok_points[i].X==0&&ok_points[i].Y==player->col_cnt-1)||ok_points[i].X==player->row_cnt-1&&ok_points[i].Y==0)
+            if(YO1(ok_points[i].X,ok_points[i].Y, player))
             {
                 point=ok_points[i];
                 flag=1;
             }
-            else if(ok_points[i].X>=player->row_cnt/2-2&&ok_points[i].Y>=player->col_cnt/2-2&&ok_points[i].X<=player->row_cnt/2+1&&ok_points[i].Y<=player->col_cnt/2+1)
+            else if(YO2(ok_points[i].X,ok_points[i].Y, player))
             {
                 point=ok_points[i];
                 flag=1;
             }
-            else if((ok_points[i].X==0&&ok_points[i].Y>=2&&ok_points[i].Y<=player->col_cnt-3)||(ok_points[i].Y==0&&ok_points[i].X>=2&&ok_points[i].X<=player->row_cnt-3)||(ok_points[i].X==player->col_cnt-1&&ok_points[i].Y>=2&&ok_points[i].Y<=player->col_cnt-3)||(ok_points[i].Y==player->row_cnt-1&&ok_points[i].X>=2&&ok_points[i].X<=player->col_cnt-3))
+            else if(YO3(ok_points[i].X,ok_points[i].Y, player))
             {
                 point=ok_points[i];
                 flag=1;
             }
-            else if((ok_points[i].X>=2&&ok_points[i].X<=player->col_cnt-3)||(ok_points[i].Y>=2&&ok_points[i].Y<=player->row_cnt-3))
+            else if(YO5(ok_points[i].X,ok_points[i].Y, player))
             {
                 point=ok_points[i];
                 flag=1;
