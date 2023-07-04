@@ -1,126 +1,168 @@
 /**
- * @file player.h
- * @author yangboyang@jisuanke.com
+ * @file computer.h
+ * @author hanweifan@jisuanke.com
  * @copyright jisuanke.com
- * @date 2021-07-01
+ * @date 2023-06-30
  */
-#include <string.h>
 #include "../include/playerbase.h"
 #include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <stdbool.h>
-
-int YO1(int x, int y,struct Player *player)
+#include <string.h>
+static const int MAXN = 12;
+static int value[MAXN][MAXN];
+void init(struct Player *player)
 {
-    if((x==0&&y==0)||(x==player->row_cnt-1&&y==player->col_cnt-1)||(x==0&&y==player->col_cnt-1)||(x==player->row_cnt-1&&y==0))
-        return 1;
-    else
-        return 0;
+    // This function will be executed at the begin of each game, only once.
+    for (int i = 0; i < player->row_cnt; i++)
+    {
+        for (int j = 0; j < player->col_cnt; j++)
+        {
+            if ('1' <= player->mat[i][j] && player->mat[i][j] <= '9')
+            {
+                value[i][j] = player->mat[i][j] - '0';
+            }
+            else
+            {
+                value[i][j] = 0;
+            }
+        }
+    }
+    double k;
+    if(player->col_cnt==8)
+    {
+        k=0.9;
+    }
+    else if(player->col_cnt==8)
+    {
+        k=2.2;
+    }
+    else if(player->col_cnt==8)
+    {
+        k=3.5;
+    }
+    // 四个角加权
+    value[0][0] += k*1000, value[0][player->col_cnt - 1] += k*1000;
+    value[player->row_cnt - 1][0] += k*1000, value[player->row_cnt - 1][player->col_cnt - 1] += k*1000;
+    // 角的相邻位置减权
+    value[0][1] -= k*1, value[1][0] -= k*1;
+    value[0][player->col_cnt - 2] -= k*1, value[1][player->col_cnt - 1] -= k*1;
+    value[player->row_cnt - 2][0] -= k*1, value[player->row_cnt - 1][1] -= k*1;
+    value[player->row_cnt - 2][player->col_cnt - 1] -= k*1,value[player->row_cnt - 1][player->col_cnt - 2] -= k*1;
+    // 2
+    for(int i=0;i<3;i++)
+    {
+        value[player->row_cnt/2-2][player->col_cnt/2-2+i] += k*40;
+        value[player->row_cnt/2+1][player->col_cnt/2-2-i] += k*40;
+        value[player->row_cnt/2-2+i][player->col_cnt/2+1] += k*40;
+        value[player->row_cnt/2+1-i][player->col_cnt/2+1] += k*40;
+    }
+    // 3
+    for(int i=0;i<player->col_cnt-5;i++)
+    {
+        value[0][2+i] += k*30;
+        value[2+i][0] += k*30;
+        value[player->row_cnt-1][2+i] += k*30;
+        value[2+i][player->col_cnt-1] += k*30;
+    }
 }
-
-int YO2(int x, int y,struct Player *player)
+static int is_valid(struct Player *player, int posx, int posy, char my_piece)
 {
-    if(x>=player->row_cnt/2-2&&y>=player->col_cnt/2-2&&x<=player->row_cnt/2+1&&y<=player->col_cnt/2+1)
-        return 1;
-    else
-        return 0;
-}
-    
-int YO3(int x, int y,struct Player *player)
-{
-    if((x==0&&y>=2&&y<=player->col_cnt-3)||(y==0&&x>=2&&x<=player->row_cnt-3)||(x==player->col_cnt-1&&y>=2&&y<=player->col_cnt-3)||(y==player->row_cnt-1&&x>=2&&x<=player->col_cnt-3))
-        return 1;
-    else
-        return 0;
-}
-    
-int YO5(int x, int y,struct Player *player)
-{
-    if((x>=2&&x<=player->col_cnt-3)||(y>=2&&y<=player->row_cnt-3))
-        return 1;
-    else
-        return 0;
-}
-    
-
-void init(struct Player *player) {
-	// This function will be executed at the begin of each game, only once.
-    srand(time(0));
-}
-
-int is_valid(struct Player *player, int posx, int posy) {
-    if (posx < 0 || posx >= player->row_cnt || posy < 0 || posy >= player->col_cnt) {
+    char op_piece = my_piece == 'O' ? 'o' : 'O';
+    if (posx < 0 || posx >= player->row_cnt || posy < 0 || posy >= player->col_cnt)
+    {
         return false;
     }
-    if (player->mat[posx][posy] == 'o' || player->mat[posx][posy] == 'O') {
+    if (player->mat[posx][posy] == op_piece || player->mat[posx][posy] == my_piece)
+    {
         return false;
     }
     int step[8][2] = {0, 1, 0, -1, 1, 0, -1, 0, 1, 1, -1, -1, 1, -1, -1, 1};
-    for (int dir = 0;  dir < 8; dir++) {
+    for (int dir = 0; dir < 8; dir++)
+    {
         int x = posx + step[dir][0];
         int y = posy + step[dir][1];
-        if (x < 0 || x >= player->row_cnt || y < 0 || y >= player->col_cnt) {
+        if (x < 0 || x >= player->row_cnt || y < 0 || y >= player->col_cnt)
+        {
             continue;
         }
-        if (player->mat[x][y] != 'o') {
+        if (player->mat[x][y] != op_piece)
+        {
             continue;
         }
-        while (true) {
+        while (true)
+        {
             x += step[dir][0];
             y += step[dir][1];
-            if (x < 0 || x >= player->row_cnt || y < 0 || y >= player->col_cnt || (player->mat[x][y] >= '1' && player->mat[x][y] <= '9')) {
+            if (x < 0 || x >= player->row_cnt || y < 0 || y >= player->col_cnt ||
+                (player->mat[x][y] >= '1' && player->mat[x][y] <= '9'))
+            {
                 break;
             }
-            if (player->mat[x][y] == 'O') {
+            if (player->mat[x][y] == my_piece)
+            {
                 return true;
             }
         }
     }
     return false;
 }
-
-struct Point place(struct Player *player) {
-    struct Point *ok_points = (struct Point *)malloc((player->row_cnt * player->col_cnt) * sizeof(struct Point));
-    int ok_cnt = 0;
-	for (int i = 0; i < player->row_cnt; i++) {
-        for (int j = 0; j < player->col_cnt; j++) {
-            if (is_valid(player, i, j)) {
-                ok_points[ok_cnt++] = initPoint(i, j);
+static int h(struct Player *player, int posx, int posy, char my_piece, int maxh)
+{
+    int h = 0;
+    char op_piece = my_piece == 'O' ? 'o' : 'O';
+    char c = player->mat[posx][posy];
+    player->mat[posx][posy] = my_piece;
+    for (int i = 0; i < player->row_cnt; i++)
+    {
+        for (int j = 0; j < player->col_cnt; j++)
+        {
+            if (player->mat[i][j] == my_piece)
+            {
+                h += value[i][j];
+            }
+            else
+            {
+                if (player->mat[i][j] == op_piece)
+                    h -= value[i][j];
             }
         }
     }
-    struct Point point = initPoint(-1, -1); 
-    if (ok_cnt > 0) {
-        int flag=0;
-        for(int i=0;i<ok_cnt;i++)
+    if (h > maxh)
+        for (int i = 0; i < player->row_cnt; i++)
         {
-            if(YO1(ok_points[i].X,ok_points[i].Y, player))
+            for (int j = 0; j < player->col_cnt; j++)
             {
-                point=ok_points[i];
-                flag=1;
-            }
-            else if(YO2(ok_points[i].X,ok_points[i].Y, player))
-            {
-                point=ok_points[i];
-                flag=1;
-            }
-            else if(YO3(ok_points[i].X,ok_points[i].Y, player))
-            {
-                point=ok_points[i];
-                flag=1;
-            }
-            else if(YO5(ok_points[i].X,ok_points[i].Y, player))
-            {
-                point=ok_points[i];
-                flag=1;
+                if (is_valid(player, i, j, op_piece))
+                {
+                    h--;
+                    if (h <= maxh)
+                        break;
+                }
             }
         }
-        if(flag==0)
-        {
-            point = ok_points[rand() % ok_cnt];
-        }
-    }
-    free(ok_points);
-	return point;
+    player->mat[posx][posy] = c;
+    return h;
 }
+struct Point place(struct Player *player)
+{
+    int maxh = -0x3f3f3f3f, maxx = -1, maxy = -1;
+    for (int i = 0; i < player->row_cnt; i++)
+    {
+        for (int j = 0; j < player->col_cnt; j++)
+        {
+            if (is_valid(player, i, j, 'O'))
+            {
+                int h1 = h(player, i, j, 'O', maxh);
+                if (h1 > maxh)
+                {
+                    maxh = h1;
+                    maxx = i;
+                    maxy = j;
+                }
+            }
+        }
+    }
+    if (maxx != -1 || maxy != -1)
+        return initPoint(maxx, maxy);
+    return initPoint(-1, -1); // give up
+}
+
