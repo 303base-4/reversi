@@ -4,7 +4,6 @@
  * @copyright jisuanke.com
  * @date 2021-07-01
  */
-
 #include <string.h>
 #include "../include/playerbase.h"
 #include <stdio.h>
@@ -74,6 +73,11 @@ struct Point place(struct Player *player) {
                 flag=1;
             }
             else if((ok_points[i].X==0&&ok_points[i].Y>=2&&ok_points[i].Y<=player->col_cnt-3)||(ok_points[i].Y==0&&ok_points[i].X>=2&&ok_points[i].X<=player->row_cnt-3)||(ok_points[i].X==player->col_cnt-1&&ok_points[i].Y>=2&&ok_points[i].Y<=player->col_cnt-3)||(ok_points[i].Y==player->row_cnt-1&&ok_points[i].X>=2&&ok_points[i].X<=player->col_cnt-3))
+            {
+                point=ok_points[i];
+                flag=1;
+            }
+            else if((ok_points[i].X>=2&&ok_points[i].X<=player->col_cnt-3)||(ok_points[i].Y>=2&&ok_points[i].Y<=player->row_cnt-3))
             {
                 point=ok_points[i];
                 flag=1;
