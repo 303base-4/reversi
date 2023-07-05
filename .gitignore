@@ -1,1 +1,8 @@
 .vscode
+log
+result.txt
+bin/check_computer
+bin/check_player
+bin/computer
+bin/player
+.debug
