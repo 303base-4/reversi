@@ -1,20 +1,10 @@
-/**
- * @file computer.h
- * @author hanweifan@jisuanke.com
- * @copyright jisuanke.com
- * @date 2023-06-30
- */
-
 #include <string.h>
 #include "../include/playerbase.h"
 #include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <stdbool.h>
+#include <iostream>
 
 void init(struct Player *player) {
 	// This function will be executed at the begin of each game, only once.
-    srand(time(0));
 }
 
 int is_valid(struct Player *player, int posx, int posy) {
@@ -49,19 +39,29 @@ int is_valid(struct Player *player, int posx, int posy) {
 }
 
 struct Point place(struct Player *player) {
-    struct Point *ok_points = (struct Point *)malloc((player->row_cnt * player->col_cnt) * sizeof(struct Point));
-    int ok_cnt = 0;
-	for (int i = 0; i < player->row_cnt; i++) {
-        for (int j = 0; j < player->col_cnt; j++) {
-            if (is_valid(player, i, j)) {
-                ok_points[ok_cnt++] = initPoint(i, j);
+	for (int i = player->row_cnt - 1; i >= player->row_cnt - i - 1; i--) {
+        int ti = i;
+		for (int j = player->col_cnt - 1; j >= player->col_cnt - j - 1; j--) {
+            int tj = j;
+			if (is_valid(player, ti, tj)) {
+				return initPoint(ti, tj);
+			}
+            tj = player->col_cnt - j - 1;
+            if (is_valid(player, ti, tj)) {
+				return initPoint(ti, tj);
+			}
+		}
+        ti = player->row_cnt - i - 1;
+        for (int j = player->col_cnt - 1; j >= player->col_cnt - j - 1; j--) {
+            int tj = j;
+            if (is_valid(player, ti, tj)) {
+                return initPoint(ti, tj);
+            }
+            tj = player->col_cnt - j - 1;
+            if (is_valid(player, ti, tj)) {
+                return initPoint(ti, tj);
             }
         }
-    }
-    struct Point point = initPoint(-1, -1); 
-    if (ok_cnt > 0) {
-        point = ok_points[rand() % ok_cnt];
-    }
-    free(ok_points);
-	return point;
+	}
+	return initPoint(-1, -1);   // give up
 }
