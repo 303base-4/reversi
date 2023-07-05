@@ -254,7 +254,7 @@ struct Point place(struct Player *player)
                     tmp[i][player->col_cnt] = '\0';
                 }
                 add(x, y, player, 'O');
-                int maxdepth = 4;
+                int maxdepth = 3;
                 int h1 = -dfs(player, maxdepth, 'o', -INF, -maxh);
                 if (h1 >= maxh)
                 {
