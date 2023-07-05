@@ -28,31 +28,46 @@ void init(struct Player *player)
             }
         }
     }
+    double k=1;
+    if(player->col_cnt==12)
+    {
+        k=1.5;
+    }
+    if(player->col_cnt==10)
+    {
+        k=1;
+    }
+    if(player->col_cnt==8)
+    {
+        k=1.6;
+    }
     // 四个角加权
-    const int v1 = 15;
+    const int v1 = k*9;
     value[0][0] += v1, value[0][player->col_cnt - 1] += v1;
     value[player->row_cnt - 1][0] += v1, value[player->row_cnt - 1][player->col_cnt - 1] += v1;
     // 角的相邻位置减权
-    const int v2 = 5;
+    const int v2 = k*3;
     value[0][1] -= v2, value[1][0] -= v2;
     value[0][player->col_cnt - 2] -= v2, value[1][player->col_cnt - 1] -= v2;
     value[player->row_cnt - 2][0] -= v2, value[player->row_cnt - 1][1] -= v2;
     value[player->row_cnt - 2][player->col_cnt - 1] -= v2, value[player->row_cnt - 1][player->col_cnt - 2] -= v2;
     //2
+    const int v3 = k*1;
     for(int i=0;i<3;i++)
     {
-        value[player->row_cnt/2-2][player->col_cnt/2-2+i] += 1;
-        value[player->row_cnt/2+1][player->col_cnt/2-2-i] += 1;
-        value[player->row_cnt/2-2+i][player->col_cnt/2+1] += 1;
-        value[player->row_cnt/2+1-i][player->col_cnt/2+1] += 1;
+        value[player->row_cnt/2-2][player->col_cnt/2-2+i] += v3;
+        value[player->row_cnt/2+1][player->col_cnt/2-2-i] += v3;
+        value[player->row_cnt/2-2+i][player->col_cnt/2+1] += v3;
+        value[player->row_cnt/2+1-i][player->col_cnt/2+1] += v3;
     }
     // 3
+    const int v4 = k*3;
     for(int i=0;i<player->col_cnt-4;i++)
     {
-        value[0][2+i] += 3;
-        value[2+i][0] += 3;
-        value[player->row_cnt-1][2+i] += 3;
-        value[2+i][player->col_cnt-1] += 3;
+        value[0][2+i] += v4;
+        value[2+i][0] += v4;
+        value[player->row_cnt-1][2+i] += v4;
+        value[2+i][player->col_cnt-1] += v4;
     }
 }
 static int is_valid(struct Player *player, int posx, int posy, char my_piece)
