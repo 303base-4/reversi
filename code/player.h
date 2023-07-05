@@ -172,11 +172,7 @@ static int dfs(struct Player *player, int maxdepth, char my_piece, int beta)
             if (is_valid(player, i, j, my_piece))
             {
                 int x = i, y = j;
-                char **tmp = (char **)malloc(player->row_cnt * sizeof(char *));
-                for (int i = 0; i < player->row_cnt; i++)
-                {
-                    tmp[i] = (char *)malloc((player->col_cnt + 1) * sizeof(char));
-                }
+                char tmp[player->row_cnt][player->col_cnt + 1];
                 for (int i = 0; i < player->row_cnt; i++)
                 {
                     for (int j = 0; j < player->col_cnt; j++)
@@ -198,13 +194,8 @@ static int dfs(struct Player *player, int maxdepth, char my_piece, int beta)
                         player->mat[i][j] = tmp[i][j];
                     }
                 }
-                for (int i = 0; i < player->row_cnt; i++)
-                {
-                    free(tmp[i]);
-                }
-                free(tmp);
-                if (maxh >= beta)
-                    return beta + 1;
+                if (maxh > beta)
+                    return maxh;
             }
         }
     }
@@ -220,11 +211,7 @@ struct Point place(struct Player *player)
             if (is_valid(player, i, j, 'O'))
             {
                 int x = i, y = j;
-                char **tmp = (char **)malloc(player->row_cnt * sizeof(char *));
-                for (int i = 0; i < player->row_cnt; i++)
-                {
-                    tmp[i] = (char *)malloc((player->col_cnt + 1) * sizeof(char));
-                }
+                char tmp[player->row_cnt][player->col_cnt + 1];
                 for (int i = 0; i < player->row_cnt; i++)
                 {
                     for (int j = 0; j < player->col_cnt; j++)
@@ -249,11 +236,6 @@ struct Point place(struct Player *player)
                         player->mat[i][j] = tmp[i][j];
                     }
                 }
-                for (int i = 0; i < player->row_cnt; i++)
-                {
-                    free(tmp[i]);
-                }
-                free(tmp);
             }
         }
     }
