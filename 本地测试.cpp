@@ -14,7 +14,7 @@ static const int MAXN = 12;
 static int value[MAXN][MAXN];
 static const int INF = 0x3f3f3f3f;
 char start[10][10] = {
-    "11111111", "11111111", "11O11111", "1OOOOOO1", "oOoOooOo", "OOOoOOoo", "oOOOOO1o", "oooo1111",
+    "11111111", "11111111", "11111111", "111oO111", "111Oo111", "11111111", "11111111", "11111111",
 };
 
 struct Player
@@ -226,46 +226,6 @@ int check(struct Player *player, char **s, struct Point point, int num)
     }
 }
 
-int is_valid(struct Player *player, int posx, int posy)
-{
-    if (posx < 0 || posx >= player->row_cnt || posy < 0 || posy >= player->col_cnt)
-    {
-        return false;
-    }
-    if (player->mat[posx][posy] == 'o' || player->mat[posx][posy] == 'O')
-    {
-        return false;
-    }
-    int step[8][2] = {0, 1, 0, -1, 1, 0, -1, 0, 1, 1, -1, -1, 1, -1, -1, 1};
-    for (int dir = 0; dir < 8; dir++)
-    {
-        int x = posx + step[dir][0];
-        int y = posy + step[dir][1];
-        if (x < 0 || x >= player->row_cnt || y < 0 || y >= player->col_cnt)
-        {
-            continue;
-        }
-        if (player->mat[x][y] != 'o')
-        {
-            continue;
-        }
-        while (true)
-        {
-            x += step[dir][0];
-            y += step[dir][1];
-            if (x < 0 || x >= player->row_cnt || y < 0 || y >= player->col_cnt ||
-                (player->mat[x][y] >= '1' && player->mat[x][y] <= '9'))
-            {
-                break;
-            }
-            if (player->mat[x][y] == 'O')
-            {
-                return true;
-            }
-        }
-    }
-    return false;
-}
 static int is_valid(struct Player *player, int posx, int posy, char my_piece)
 {
     char op_piece = my_piece == 'O' ? 'o' : 'O';
@@ -307,6 +267,47 @@ static int is_valid(struct Player *player, int posx, int posy, char my_piece)
     }
     return false;
 }
+static void add(int posx, int posy, struct Player *player, char my_piece)
+{
+    player->mat[posx][posy] = my_piece;
+    int step[8][2] = {0, 1, 0, -1, 1, 0, -1, 0, 1, 1, -1, -1, 1, -1, -1, 1};
+    char op_piece = my_piece == 'O' ? 'o' : 'O';
+    for (int dir = 0; dir < 8; dir++)
+    {
+        int x = posx + step[dir][0];
+        int y = posy + step[dir][1];
+        if (x < 0 || x >= player->row_cnt || y < 0 || y >= player->col_cnt)
+        {
+            continue;
+        }
+        if (player->mat[x][y] != op_piece)
+        {
+            continue;
+        }
+        while (true)
+        {
+            x += step[dir][0];
+            y += step[dir][1];
+            if (x < 0 || x >= player->row_cnt || y < 0 || y >= player->col_cnt ||
+                (player->mat[x][y] >= '1' && player->mat[x][y] <= '9'))
+            {
+                break;
+            }
+            if (player->mat[x][y] == my_piece)
+            {
+                x = posx + step[dir][0];
+                y = posy + step[dir][1];
+                while (player->mat[x][y] != my_piece)
+                {
+                    player->mat[x][y] = my_piece;
+                    x += step[dir][0];
+                    y += step[dir][1];
+                }
+                break;
+            }
+        }
+    }
+}
 static int h(struct Player *player, char my_piece)
 {
     int h = 0;
@@ -346,95 +347,103 @@ static int dfs(struct Player *player, int maxdepth, char my_piece, int beta)
     }
     int maxh = -INF;
     char op_piece = my_piece == 'O' ? 'o' : 'O';
-    int queue[145][2], qp = 0;
-    memset(queue, 0, sizeof(queue));
     for (int i = 0; i < player->row_cnt; i++)
     {
         for (int j = 0; j < player->col_cnt; j++)
         {
             if (is_valid(player, i, j, my_piece))
             {
-                queue[qp][0] = i, queue[qp++][1] = j;
+                int x = i, y = j;
+                char **tmp = (char **)malloc(player->row_cnt * sizeof(char *));
+                for (int i = 0; i < player->row_cnt; i++)
+                {
+                    tmp[i] = (char *)malloc((player->col_cnt + 1) * sizeof(char));
+                }
+                for (int i = 0; i < player->row_cnt; i++)
+                {
+                    for (int j = 0; j < player->col_cnt; j++)
+                    {
+                        tmp[i][j] = player->mat[i][j];
+                    }
+                    tmp[i][player->col_cnt] = '\0';
+                }
+                add(x, y, player, my_piece);
+                int h1 = -(dfs(player, maxdepth - 1, op_piece, -maxh));
+                if (h1 >= maxh)
+                {
+                    maxh = h1;
+                }
+                for (int i = 0; i < player->row_cnt; i++)
+                {
+                    for (int j = 0; j < player->col_cnt; j++)
+                    {
+                        player->mat[i][j] = tmp[i][j];
+                    }
+                }
+                for (int i = 0; i < player->row_cnt; i++)
+                {
+                    free(tmp[i]);
+                }
+                free(tmp);
+                if (maxh >= beta)
+                    return maxh;
             }
         }
     }
-    int max_tries = (qp >> 1) + 1;
-    int cnt = 0;
-    while (cnt <= max_tries && qp > 0)
-    {
-        int i;
-        i = rand() % qp;
-        int x = queue[i][0], y = queue[i][1];
-        for (int j = i; j < qp - 1; j++)
-        {
-            queue[j][0] = queue[j + 1][0];
-            queue[j][1] = queue[j + 1][1];
-        }
-        qp--;
-        char c = player->mat[x][y];
-        player->mat[x][y] = my_piece;
-        int h1 = -(dfs(player, maxdepth - 1, op_piece, -maxh));
-        if (h1 > maxh)
-        {
-            cnt = 0;
-            maxh = h1;
-        }
-        else
-        {
-            cnt++;
-        }
-        player->mat[x][y] = c;
-    }
-    printf("%d %d\n", maxdepth, maxh);
     return maxh;
 }
 struct Point place(struct Player *player)
 {
     int maxh = -INF, maxx = -1, maxy = -1;
-    int queue[145][2], qp = 0;
-    memset(queue, 0, sizeof(queue));
     for (int i = 0; i < player->row_cnt; i++)
     {
         for (int j = 0; j < player->col_cnt; j++)
         {
             if (is_valid(player, i, j, 'O'))
             {
-                queue[qp][0] = i, queue[qp++][1] = j;
+                int x = i, y = j;
+                char **tmp = (char **)malloc(player->row_cnt * sizeof(char *));
+                for (int i = 0; i < player->row_cnt; i++)
+                {
+                    tmp[i] = (char *)malloc((player->col_cnt + 1) * sizeof(char));
+                }
+                for (int i = 0; i < player->row_cnt; i++)
+                {
+                    for (int j = 0; j < player->col_cnt; j++)
+                    {
+                        tmp[i][j] = player->mat[i][j];
+                    }
+                    tmp[i][player->col_cnt] = '\0';
+                }
+                add(x, y, player, 'O');
+                int h1 = -dfs(player, 4, 'o', -maxh);
+                if (h1 >= maxh)
+                {
+                    maxh = h1;
+                    maxx = x;
+                    maxy = y;
+                    printf("\n");
+                    for (int i = 0; i < player->row_cnt; i++)
+                    {
+                        printf("%s\n", player->mat[i]);
+                    }
+                }
+                for (int i = 0; i < player->row_cnt; i++)
+                {
+                    for (int j = 0; j < player->col_cnt; j++)
+                    {
+                        player->mat[i][j] = tmp[i][j];
+                    }
+                }
+                for (int i = 0; i < player->row_cnt; i++)
+                {
+                    free(tmp[i]);
+                }
+                free(tmp);
             }
         }
     }
-    int max_tries = (qp >> 1) + 1;
-    int cnt = 0;
-    while (cnt <= max_tries && qp > 0)
-    {
-        int i;
-        i = rand() % qp;
-        int x = queue[i][0], y = queue[i][1];
-        for (int j = i; j < qp - 1; j++)
-        {
-            queue[j][0] = queue[j + 1][0];
-            queue[j][1] = queue[j + 1][1];
-        }
-        qp--;
-        char c = player->mat[x][y];
-        player->mat[x][y] = 'O';
-        int h1 = -dfs(player, 4, 'o', -maxh);
-        if (h1 != -INF && h1 != INF && h1 > maxh)
-        {
-            cnt = 0;
-            maxh = h1;
-            maxx = x;
-            maxy = y;
-        }
-        else
-        {
-            cnt++;
-        }
-        player->mat[x][y] = c;
-    }
-    struct Point pp;
-    pp.X = maxx, pp.Y = maxy;
-    return pp;
+    return {maxx, maxy};
 }
 
 void pprint(struct Point p)
