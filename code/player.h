@@ -157,7 +157,7 @@ static int h(struct Player *player, char my_piece)
     }
     return h;
 }
-static int dfs(struct Player *player, int maxdepth, char my_piece, int beta)
+static int dfs(struct Player *player, int maxdepth, char my_piece, int alpha, int beta)
 {
     if (maxdepth == 0)
     {
@@ -182,10 +182,12 @@ static int dfs(struct Player *player, int maxdepth, char my_piece, int beta)
                     tmp[i][player->col_cnt] = '\0';
                 }
                 add(x, y, player, my_piece);
-                int h1 = -(dfs(player, maxdepth - 1, op_piece, -maxh));
+                int h1 = -(dfs(player, maxdepth - 1, op_piece, -beta, -alpha));
                 if (h1 >= maxh)
                 {
                     maxh = h1;
+                    if (maxh > alpha)
+                        alpha = maxh;
                 }
                 for (int i = 0; i < player->row_cnt; i++)
                 {
@@ -221,8 +223,8 @@ struct Point place(struct Player *player)
                     tmp[i][player->col_cnt] = '\0';
                 }
                 add(x, y, player, 'O');
-                int maxdepth = player->row_cnt > 10 ? 2 : 3;
-                int h1 = -dfs(player, maxdepth, 'o', -maxh);
+                int maxdepth = 3;
+                int h1 = -dfs(player, maxdepth, 'o', maxh, -maxh);
                 if (h1 >= maxh)
                 {
                     maxh = h1;
