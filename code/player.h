@@ -179,8 +179,6 @@ static int h(struct Player *player, char my_piece)
         {
             if (is_valid(player, i, j, my_piece))
                 h += value[i][j];
-            else if (is_valid(player, i, j, my_piece))
-                h -= value[i][j];
         }
     }
     return h;
