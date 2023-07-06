@@ -37,11 +37,11 @@ void init(struct Player *player)
     }
     if (player->col_cnt == 10)
     {
-        k = 1;
+        k = 1.2;
     }
     if (player->col_cnt == 8)
     {
-        k = 1.2;
+        k = 1.9;
     }
         // 四个角加权
     const int v1 = k * 9;
@@ -157,10 +157,10 @@ static void add(int posx, int posy, struct Player *player, char my_piece)
     }
 }
 void change(struct Player *player,char my_piece){
-    int v2 = k*9;
-    int v3 = k;
+    int v2 = k*8;
+    int v3 = k*3;
     if(player->mat[0][0]==my_piece){
-       value[0][1] -= v2, value[1][0] -= v2, value[1][1] -= v2;
+       value[0][1] += v2, value[1][0] += v2, value[1][1] += v2;
        for(int i=1;i<player->row_cnt;i++){
         value[i][0] += v3;
         value[i][i] += v3;
@@ -169,7 +169,7 @@ void change(struct Player *player,char my_piece){
 
     }
     if(player->mat[0][player->col_cnt-1]==my_piece){
-        value[0][player->col_cnt - 2] -= v2, value[1][player->col_cnt - 1] -= v2, value[1][player->col_cnt - 2] -= v2;
+        value[0][player->col_cnt - 2] += v2, value[1][player->col_cnt - 1] -= v2, value[1][player->col_cnt - 2] += v2;
         for(int i=1;i<player->row_cnt;i++){
         value[i][player->col_cnt-1] += v3;
         value[i][player->col_cnt-1-i] += v3;
@@ -177,7 +177,7 @@ void change(struct Player *player,char my_piece){
        }
     }
     if(player->mat[player->row_cnt-1][0]==my_piece){
-        value[player->row_cnt - 2][0] -= v2, value[player->row_cnt - 1][1] -= v2, value[player->row_cnt - 2][1] -= v2;
+        value[player->row_cnt - 2][0] += v2, value[player->row_cnt - 1][1] += v2, value[player->row_cnt - 2][1] += v2;
         for(int i=1;i<player->row_cnt;i++){
         value[player->row_cnt-1][i] += v3;
         value[player->row_cnt-1-i][i] += v3;
@@ -185,8 +185,8 @@ void change(struct Player *player,char my_piece){
        }
     }
     if(player->mat[player->row_cnt-1][player->col_cnt-1]==my_piece){
-        value[player->row_cnt - 2][player->col_cnt - 1] -= v2, value[player->row_cnt - 1][player->col_cnt - 2] -= v2;
-        value[player->row_cnt - 2][player->col_cnt - 2] -= v2;
+        value[player->row_cnt - 2][player->col_cnt - 1] += v2, value[player->row_cnt - 1][player->col_cnt - 2] += v2;
+        value[player->row_cnt - 2][player->col_cnt - 2] += v2;
         for(int i=1;i<player->row_cnt;i++){
         value[i][player->col_cnt-1] += v3;
         value[i][i] += v3;
@@ -196,8 +196,8 @@ void change(struct Player *player,char my_piece){
 
 }
 void back(struct Player *player,char my_piece){
-    int v2 = k*9;
-    int v3 = k;
+    int v2 = k*8;
+    int v3 = k*3;
     if(player->mat[0][0]==my_piece){
        value[0][1] -= v2, value[1][0] -= v2, value[1][1] -= v2;
        for(int i=1;i<player->row_cnt;i++){
