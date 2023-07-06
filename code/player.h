@@ -47,11 +47,12 @@ void init(struct Player *player)
     value[0][0] += v1, value[0][player->col_cnt - 1] += v1;
     value[player->row_cnt - 1][0] += v1, value[player->row_cnt - 1][player->col_cnt - 1] += v1;
     // 角的相邻位置减权
-    const int v2 = k * 3;
-    value[0][1] -= v2, value[1][0] -= v2;
-    value[0][player->col_cnt - 2] -= v2, value[1][player->col_cnt - 1] -= v2;
-    value[player->row_cnt - 2][0] -= v2, value[player->row_cnt - 1][1] -= v2;
-    value[player->row_cnt - 2][player->col_cnt - 1] -= v2, value[player->row_cnt - 1][player->col_cnt - 2] -= v2;
+    const int v2 = k * 8;
+    value[0][1] -= v2, value[1][0] -= v2, value[1][1] -= v2;
+    value[0][player->col_cnt - 2] -= v2, value[1][player->col_cnt - 1] -= v2, value[1][player->col_cnt - 2] -= v2;
+    value[player->row_cnt - 2][0] -= v2, value[player->row_cnt - 1][1] -= v2, value[player->row_cnt - 2][1] -= v2;
+    value[player->row_cnt - 2][player->col_cnt - 1] -= v2, value[player->row_cnt - 1][player->col_cnt - 2] -= v2,
+        value[player->row_cnt - 2][player->col_cnt - 2] -= v2;
     // 2
     const int v3 = k * 1;
     for (int i = 0; i < 3; i++)
@@ -178,9 +179,29 @@ static int h(struct Player *player, char my_piece)
         {
             if (is_valid(player, i, j, my_piece))
                 h += value[i][j];
+            else if (is_valid(player, i, j, my_piece))
+                h -= value[i][j];
         }
     }
     return h;
+}
+static int qcomp(const void *a, const void *b)
+{
+    int x1 = ((Point *)a)->X, y1 = ((Point *)a)->Y, x2 = ((Point *)b)->X, y2 = ((Point *)b)->Y;
+    return value[x2][y2] - value[x1][y1];
+}
+static void add_queue(struct Player *player, Point queue[], int &qp, char my_piece)
+{
+    for (int i = 0; i < player->row_cnt; i++)
+    {
+        for (int j = 0; j < player->col_cnt; j++)
+        {
+            if (is_valid(player, i, j, my_piece))
+            {
+                queue[qp].X = i, queue[qp++].Y = j;
+            }
+        }
+    }
 }
 static int dfs(struct Player *player, int maxdepth, char my_piece, int alpha, int beta, int pass)
 {
@@ -190,45 +211,43 @@ static int dfs(struct Player *player, int maxdepth, char my_piece, int alpha, in
     }
     int maxh = -INF;
     char op_piece = my_piece == 'O' ? 'o' : 'O';
-    for (int i = 0; i < player->row_cnt; i++)
+    Point queue[150];
+    int qp = 0;
+    add_queue(player, queue, qp, my_piece);
+    qsort(queue, qp, sizeof(Point), qcomp);
+    for (int i = 0; i < qp; i++)
     {
-        for (int j = 0; j < player->col_cnt; j++)
+        int x = queue[i].X, y = queue[i].Y;
+        char tmp[player->row_cnt][player->col_cnt + 1];
+        for (int i = 0; i < player->row_cnt; i++)
         {
-            if (is_valid(player, i, j, my_piece))
+            for (int j = 0; j < player->col_cnt; j++)
             {
-                int x = i, y = j;
-                char tmp[player->row_cnt][player->col_cnt + 1];
-                for (int i = 0; i < player->row_cnt; i++)
-                {
-                    for (int j = 0; j < player->col_cnt; j++)
-                    {
-                        tmp[i][j] = player->mat[i][j];
-                    }
-                    tmp[i][player->col_cnt] = '\0';
-                }
-                add(x, y, player, my_piece);
-                int h1;
-                if (maxdepth <= 1)
-                    h1 = -h(player, op_piece);
-                else
-                    h1 = -(dfs(player, maxdepth - 1, op_piece, -beta, -alpha, 0));
-                if (h1 >= maxh)
-                {
-                    maxh = h1;
-                    if (maxh > alpha)
-                        alpha = maxh;
-                }
-                for (int i = 0; i < player->row_cnt; i++)
-                {
-                    for (int j = 0; j < player->col_cnt; j++)
-                    {
-                        player->mat[i][j] = tmp[i][j];
-                    }
-                }
-                if (maxh > beta)
-                    return maxh;
+                tmp[i][j] = player->mat[i][j];
+            }
+            tmp[i][player->col_cnt] = '\0';
+        }
+        add(x, y, player, my_piece);
+        int h1 = value[x][y];
+        if (maxdepth == 1)
+            h1 += -h(player, op_piece);
+        else
+            h1 += -(dfs(player, maxdepth - 1, op_piece, -beta, -alpha, 0));
+        if (h1 > maxh)
+        {
+            maxh = h1;
+            if (maxh > alpha)
+                alpha = maxh;
+        }
+        for (int i = 0; i < player->row_cnt; i++)
+        {
+            for (int j = 0; j < player->col_cnt; j++)
+            {
+                player->mat[i][j] = tmp[i][j];
             }
         }
+        if (maxh >= beta)
+            return maxh;
     }
     if (maxh == -INF)
     {
@@ -242,38 +261,46 @@ static int dfs(struct Player *player, int maxdepth, char my_piece, int alpha, in
 struct Point place(struct Player *player)
 {
     int maxh = -INF, maxx = -1, maxy = -1;
+    Point queue[150];
+    int qp = 0;
     for (int i = 0; i < player->row_cnt; i++)
     {
         for (int j = 0; j < player->col_cnt; j++)
         {
             if (is_valid(player, i, j, 'O'))
             {
-                int x = i, y = j;
-                char tmp[player->row_cnt][player->col_cnt + 1];
-                for (int i = 0; i < player->row_cnt; i++)
-                {
-                    for (int j = 0; j < player->col_cnt; j++)
-                    {
-                        tmp[i][j] = player->mat[i][j];
-                    }
-                    tmp[i][player->col_cnt] = '\0';
-                }
-                add(x, y, player, 'O');
-                int maxdepth = 3;
-                int h1 = -dfs(player, maxdepth, 'o', -INF, -maxh, 0);
-                if (h1 >= maxh)
-                {
-                    maxh = h1;
-                    maxx = x;
-                    maxy = y;
-                }
-                for (int i = 0; i < player->row_cnt; i++)
-                {
-                    for (int j = 0; j < player->col_cnt; j++)
-                    {
-                        player->mat[i][j] = tmp[i][j];
-                    }
-                }
+                add_queue(player, queue, qp, 'O');
+            }
+        }
+    }
+    for (int i = 0; i < qp; i++)
+    {
+        int x = queue[i].X, y = queue[i].Y;
+        char tmp[player->row_cnt][player->col_cnt + 1];
+        for (int i = 0; i < player->row_cnt; i++)
+        {
+            for (int j = 0; j < player->col_cnt; j++)
+            {
+                tmp[i][j] = player->mat[i][j];
+            }
+            tmp[i][player->col_cnt] = '\0';
+        }
+        add(x, y, player, 'O');
+        int maxdepth = 4;
+        if (player->row_cnt >= 12)
+            maxdepth = 3;
+        int h1 = value[x][y] - dfs(player, maxdepth, 'o', -INF, -maxh, 0);
+        if (h1 >= maxh)
+        {
+            maxh = h1;
+            maxx = x;
+            maxy = y;
+        }
+        for (int i = 0; i < player->row_cnt; i++)
+        {
+            for (int j = 0; j < player->col_cnt; j++)
+            {
+                player->mat[i][j] = tmp[i][j];
             }
         }
     }
