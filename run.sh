@@ -9,7 +9,7 @@ computer="$WK_DIR/bin/computer"
 player="$WK_DIR/bin/player"
 log_dir="$WK_DIR/log/judge"
 
-map="$WK_DIR/data/map.txt"
+map="$WK_DIR/data/map1.txt"
 
 cd $WK_DIR
 

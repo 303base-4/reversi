@@ -263,16 +263,8 @@ struct Point place(struct Player *player)
     int maxh = -INF, maxx = -1, maxy = -1;
     Point queue[150];
     int qp = 0;
-    for (int i = 0; i < player->row_cnt; i++)
-    {
-        for (int j = 0; j < player->col_cnt; j++)
-        {
-            if (is_valid(player, i, j, 'O'))
-            {
-                add_queue(player, queue, qp, 'O');
-            }
-        }
-    }
+    add_queue(player, queue, qp, 'O');
+    qsort(queue, qp, sizeof(Point), qcomp);
     for (int i = 0; i < qp; i++)
     {
         int x = queue[i].X, y = queue[i].Y;
