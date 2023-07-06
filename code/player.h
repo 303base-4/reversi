@@ -10,28 +10,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-static const int MAXN = 12;
+static const int MAXN = 14;
 static const int INF = 0x3f3f3f3f;
 static int value[MAXN][MAXN];
+static int score[MAXN][MAXN];
 void init(struct Player *player)
 {
-    srand(time(NULL));
     // This function will be executed at the begin of each game, only once.
+    memset(value, 0, sizeof(value));
+    memset(score, 0, sizeof(score));
     for (int i = 0; i < player->row_cnt; i++)
     {
         for (int j = 0; j < player->col_cnt; j++)
         {
             if ('1' <= player->mat[i][j] && player->mat[i][j] <= '9')
             {
-                value[i][j] = player->mat[i][j] - '0';
-            }
-            else
-            {
-                value[i][j] = 0;
-            }
-            if (i == 0 || j == 0 || i == player->row_cnt - 1 || j == player->col_cnt - 1)
-            {
-                value[i][j] += 1;
+                score[i][j] = player->mat[i][j] - '0';
             }
         }
     }
@@ -169,12 +163,12 @@ static int h(struct Player *player, char my_piece)
         {
             if (player->mat[i][j] == my_piece)
             {
-                h += value[i][j];
+                h += score[i][j];
             }
             else
             {
                 if (player->mat[i][j] == op_piece)
-                    h -= value[i][j];
+                    h -= score[i][j];
             }
         }
     }
@@ -182,13 +176,13 @@ static int h(struct Player *player, char my_piece)
     {
         for (int j = 0; j < player->col_cnt; j++)
         {
-            if (is_valid(player, i, j, op_piece))
-                h--;
+            if (is_valid(player, i, j, my_piece))
+                h += value[i][j];
         }
     }
     return h;
 }
-static int dfs(struct Player *player, int maxdepth, char my_piece, int alpha, int beta)
+static int dfs(struct Player *player, int maxdepth, char my_piece, int alpha, int beta, int pass)
 {
     if (maxdepth == 0)
     {
@@ -213,7 +207,11 @@ static int dfs(struct Player *player, int maxdepth, char my_piece, int alpha, in
                     tmp[i][player->col_cnt] = '\0';
                 }
                 add(x, y, player, my_piece);
-                int h1 = -(dfs(player, maxdepth - 1, op_piece, -beta, -alpha));
+                int h1;
+                if (maxdepth <= 1)
+                    h1 = -h(player, op_piece);
+                else
+                    h1 = -(dfs(player, maxdepth - 1, op_piece, -beta, -alpha, 0));
                 if (h1 >= maxh)
                 {
                     maxh = h1;
@@ -231,6 +229,13 @@ static int dfs(struct Player *player, int maxdepth, char my_piece, int alpha, in
                     return maxh;
             }
         }
+    }
+    if (maxh == -INF)
+    {
+        if (pass)
+            return h(player, my_piece);
+        else
+            maxh = -dfs(player, maxdepth - 1, op_piece, -beta, -alpha, 1);
     }
     return maxh;
 }
@@ -255,7 +260,7 @@ struct Point place(struct Player *player)
                 }
                 add(x, y, player, 'O');
                 int maxdepth = 3;
-                int h1 = -dfs(player, maxdepth, 'o', -INF, -maxh);
+                int h1 = -dfs(player, maxdepth, 'o', -INF, -maxh, 0);
                 if (h1 >= maxh)
                 {
                     maxh = h1;
