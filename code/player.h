@@ -279,7 +279,7 @@ struct Point place(struct Player *player)
         }
         add(x, y, player, 'O');
         int maxdepth = 4;
-        if (player->row_cnt >= 12)
+        if (player->row_cnt >= 10)
             maxdepth = 3;
         int h1 = value[x][y] - dfs(player, maxdepth, 'o', -INF, -maxh, 0);
         if (h1 >= maxh)
