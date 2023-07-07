@@ -6,6 +6,8 @@
  */
 
 #include "../include/playerbase.h"
+#include <assert.h>
+#include <bits/types/FILE.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,32 +31,17 @@ void init(struct Player *player)
             }
         }
     }
-    double k = 1;
-    if (player->col_cnt == 12)
-    {
-        k = 1.5;
-    }
-    if (player->col_cnt == 10)
-    {
-        k = 1;
-    }
-    if (player->col_cnt == 8)
-    {
-        k = 1.6;
-    }
-    // 四个角加权
-    const int v1 = k * 9;
+    int v1 = 9579, v2 = 5165, v3 = 5484, v4 = 953, v5 = 2011;
+    // 1四个角加权
     value[0][0] += v1, value[0][player->col_cnt - 1] += v1;
     value[player->row_cnt - 1][0] += v1, value[player->row_cnt - 1][player->col_cnt - 1] += v1;
-    // 角的相邻位置减权
-    const int v2 = k * 8;
+    // 2角的相邻位置减权
     value[0][1] -= v2, value[1][0] -= v2, value[1][1] -= v2;
     value[0][player->col_cnt - 2] -= v2, value[1][player->col_cnt - 1] -= v2, value[1][player->col_cnt - 2] -= v2;
     value[player->row_cnt - 2][0] -= v2, value[player->row_cnt - 1][1] -= v2, value[player->row_cnt - 2][1] -= v2;
     value[player->row_cnt - 2][player->col_cnt - 1] -= v2, value[player->row_cnt - 1][player->col_cnt - 2] -= v2,
         value[player->row_cnt - 2][player->col_cnt - 2] -= v2;
-    // 2
-    const int v3 = k * 1;
+    // 3
     for (int i = 0; i < 3; i++)
     {
         value[player->row_cnt / 2 - 2][player->col_cnt / 2 - 2 + i] += v3;
@@ -62,8 +49,7 @@ void init(struct Player *player)
         value[player->row_cnt / 2 - 2 + i][player->col_cnt / 2 + 1] += v3;
         value[player->row_cnt / 2 + 1 - i][player->col_cnt / 2 + 1] += v3;
     }
-    // 3
-    const int v4 = k * 3;
+    // 4
     for (int i = 0; i < player->col_cnt - 4; i++)
     {
         value[0][2 + i] += v4;
@@ -71,10 +57,18 @@ void init(struct Player *player)
         value[player->row_cnt - 1][2 + i] += v4;
         value[2 + i][player->col_cnt - 1] += v4;
     }
+    // 5
+    for (int i = 0; i < player->col_cnt - 4; i++)
+    {
+        value[2 + i][1] -= v5;
+        value[2 + i][player->col_cnt - 2] -= v5;
+        value[1][2 + i] -= v5;
+        value[player->col_cnt - 2][2 + i] -= v5;
+    }
 }
 static int is_valid(struct Player *player, int posx, int posy, char my_piece)
 {
-    char op_piece = my_piece == 'O' ? 'o' : 'O';
+    char op_piece = (my_piece == 'O' ? 'o' : 'O');
     if (posx < 0 || posx >= player->row_cnt || posy < 0 || posy >= player->col_cnt)
     {
         return false;
@@ -117,7 +111,7 @@ static void add(int posx, int posy, struct Player *player, char my_piece)
 {
     player->mat[posx][posy] = my_piece;
     int step[8][2] = {0, 1, 0, -1, 1, 0, -1, 0, 1, 1, -1, -1, 1, -1, -1, 1};
-    char op_piece = my_piece == 'O' ? 'o' : 'O';
+    char op_piece = (my_piece == 'O' ? 'o' : 'O');
     for (int dir = 0; dir < 8; dir++)
     {
         int x = posx + step[dir][0];
@@ -157,7 +151,7 @@ static void add(int posx, int posy, struct Player *player, char my_piece)
 static int h(struct Player *player, char my_piece)
 {
     int h = 0;
-    char op_piece = my_piece == 'O' ? 'o' : 'O';
+    char op_piece = (my_piece == 'O' ? 'o' : 'O');
     for (int i = 0; i < player->row_cnt; i++)
     {
         for (int j = 0; j < player->col_cnt; j++)
@@ -208,7 +202,7 @@ static int dfs(struct Player *player, int maxdepth, char my_piece, int alpha, in
         return h(player, my_piece);
     }
     int maxh = -INF;
-    char op_piece = my_piece == 'O' ? 'o' : 'O';
+    char op_piece = (my_piece == 'O' ? 'o' : 'O');
     Point queue[150];
     int qp = 0;
     add_queue(player, queue, qp, my_piece);
